@@ -122,7 +122,7 @@ lista_correo_experimento = ['javacasm@gmail.com']      #quitar esta y poner la v
 
 
 #CLAVE para la API de telegram (token del bot)
-TOKEN = "892980687:AAEAr6zBV5GDFoGKhxzEjzz-yUMPmvNRV1Y" # quitar este y poner el de vuestro bot
+TOKEN = "1254789654:abcdefgtyhjuikloplñljhgffkjuñññg" # quitar este y poner el de vuestro bot
 
 
 # Definimos la id del que sera el usuarios administrador y que dispondra de derechos de uso completo
