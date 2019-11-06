@@ -2,6 +2,8 @@
 
 Sistema de monitorización de un sistema biológico
 
+![](./images/photo_2019-11-06_21-27-37.jpg)
+
 
 ## Montaje
 
