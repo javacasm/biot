@@ -586,7 +586,7 @@ void mostarDatosEnLCD()
   lcd.print(F(" H:"));
   lcd.print(int(round(HUMEDAD)));
   lcd.print(F(" P:"));
-  lcd.print(int(PRESION));
+  lcd.print(long(PRESION));
   //lcd.print(F("atm"));
 
   lcd.setCursor(0,1);
