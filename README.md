@@ -37,8 +37,13 @@ Podemos usar 2 BME280 desde la API de la librer'ia de adafruit [Ejemplo](https:/
 
 ## Código
 
+Actualizado el fichero biodata.py a version 1.35
+* Añadido sensor de luz verde
+* Añadido sensor conductividad
+* Añadido sensor de temperatura del liquido
+
 Actualizado el fichero biodata.py a version 1.3
-* Soporta 7 dato de presion atmósferica
+* Soporta 7º dato de presion atmósferica
 * Optimizado el repintado para no cargar el sistema a 1 vez por minuto
 * Dibujando los 7 valores
 
