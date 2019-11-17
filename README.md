@@ -2,6 +2,8 @@
 
 Sistema de monitorización de un sistema biológico
 
+Basado en los trabajos de Eulogio (https://github.com/inopya/biot) y más detallado en (https://github.com/inopya/mini-tierra)
+
 ![](./images/photo_2019-11-06_21-27-37.jpg)
 
 
