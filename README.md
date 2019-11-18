@@ -4,6 +4,12 @@ Sistema de monitorización de un sistema biológico
 
 Basado en los trabajos de Eulogio (https://github.com/inopya/biot) y más detallado en (https://github.com/inopya/mini-tierra)
 
+Licencia CC para la documentación
+
+![Licencia CC](./images/Licencia_CC.png)
+
+[Licencia GPL](./LICENSE) para el código
+
 ![](./images/photo_2019-11-06_21-27-37.jpg)
 
 
