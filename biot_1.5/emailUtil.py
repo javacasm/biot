@@ -1,6 +1,18 @@
 # Email
 
 
+# EMAIL
+import smtplib
+# librerias  para construir el mensaje
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText 
+# librerias para adjuntar archivos
+from email.mime.base import MIMEBase
+from email import encoders 
+
+### EXPRESIONES REGULARES
+##import re # lo usamos para verificar los email  (sin uso en este montaje)
+
 
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 # ENVIO DE EMAIL
