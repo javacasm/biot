@@ -1,6 +1,18 @@
 # Telegram
 
+# TELEGRAM
+import telegram
+from telegram import ReplyKeyboardMarkup
+from telegram.error import NetworkError, Unauthorized
 
+
+
+# ACCESO A DATOS EN SERVIDORES (usado por telegram)
+import json 
+import requests
+
+
+import config
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 # FUNCIONES TELERAM
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
@@ -64,7 +76,7 @@ def send_message(text, chat_id):
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------  
 
-def atenderTelegramas(bot):
+def atenderTelegramas():
     '''
     Funcion principal de la gestion de telegramas.
     Los atiende y procesa, ejecutando aquellos que son ordenes directas.
@@ -78,7 +90,7 @@ def atenderTelegramas(bot):
     chat_id = 0
     try:    
         # Request updates after the last update_id
-        for update in bot.get_updates(offset=update_id, timeout=0): #timeout=5, si nos da problemas con internet lento
+        for update in telegram_bot_experimento_bio.get_updates(offset=update_id, timeout=0): #timeout=5, si nos da problemas con internet lento
             update_id = update.update_id +1
 
             if update.message:  # porque se podrian recibir updates sin mensaje...
@@ -100,7 +112,7 @@ def atenderTelegramas(bot):
                     
                     if comando == "/send" and (chat_id == ADMIN_USER or ADMIN_USER == None):  #decidir quien puede enviar correos
                         send_message("procesando peticion...", chat_id)
-                        nombreRutaConExtension = RUTA_PROGRAMA + RUTA_BACKUP + FICHERO_TXT_EXPERIMENTO
+                        nombreRutaConExtension = RUTA_PROGRAMA + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO
                         status1 = convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreRutaConExtension, \
                                                          cabecera=cabeceraTXTdatos)
                         status2 = enviarEmail(nombreRutaConExtension)
