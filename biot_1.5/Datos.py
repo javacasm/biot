@@ -2,6 +2,16 @@
 
 
 
+# 'SERIALIZACION' DE OBJETOS (para manejar el salvado de datos)
+try:  
+    import cPickle as pickle  
+except ImportError:  
+    import pickle  
+
+
+
+
+
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 # FUNCIONES CONTROL Y GESTION DE FICHEROS DE DATOS
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
