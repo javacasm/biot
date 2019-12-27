@@ -26,7 +26,7 @@ lista_correo_experimento = ['javacasm@gmail.com']      #quitar esta y poner la v
 
 
 #CLAVE para la API de telegram (token del bot)
-TOKEN = "123412341234123412341234" # quitar este y poner el de vuestro bot
+TOKEN = "PON AQUI TU TOKEN TELEGRAM" # quitar este y poner el de vuestro bot
 
 
 # Definimos la id del que sera el usuarios administrador y que dispondra de derechos de uso completo
@@ -47,6 +47,15 @@ TIEMPO_ENTRE_MUESTRAS = 60 # tiempo en segundos. Por defecto 60, un minuto
 '''***********************************************************************************************'''
 '''***********************************************************************************************'''
 
+RUTA_BACKUP = ''  #RUTA_BACKUP = 'backup/'
+
 FICHERO_DATOS_EXPERIMENTO = 'experimento_bio.dat'
 FICHERO_TXT_EXPERIMENTO = 'experimento_bio.txt'
 FICHERO_GRAFICA_EXPERIMENTO = 'experimento_bio.png'
+
+
+SerialDelay = 0.5                   #tiempo entre llamadas del puerto (en segundos), para que pueda reaccionar.
+                                    #No usar tiempos inferiores a 0.25 segundos 
+VELOCIDAD_PUERTO_SERIE = 115200
+
+INTERVALO_BACKUP = 10               #intervalo en minutos para copias de seguridad 
