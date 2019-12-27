@@ -1,13 +1,47 @@
 # Graficos
 
 
+# REPRESENTACION GRAFICA DE DATOS
+import matplotlib                               #funcionalidad para representacion grafica de datos
+import matplotlib.pyplot as plt                 #por comodidad al llamar esta funcionalidad
+from matplotlib.ticker import MultipleLocator   #para crear leyendas en los graficos
+
+
+# FUNCIONES MATEMATICAS AVANZADAS
+import numpy as np
+import math
+
+import time
+
+import utils
 
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 # REPRESENTACION GRAFICA
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 
+fig = None
+
+def clear():
+    plt.clf() # esto limpia la información del  área donde se pintan los graficos.
+
+def saveFig(ficheroImagen):
+    plt.savefig(ficheroImagen)
+
+def closePlot():
+    plt.close('all') 
+
+def pausePlot(tiempo):
+    plt.pause(tiempo)  ## refresco continuo del area de la grafica.
+
+def initPlot():
+        # Se prepara la zona de trabajo de la grafica 
+    plt.ion() # declaramos la sesión como interactiva
+    global fig
+    fig = plt.figure()
+
 def addGrafico( altura,color,columna,nombre,puntos_eje_x, datos_por_sensor_y,etiqueta,orden,minimos_maximos):
     try:
+        global fig
         ax = fig.add_subplot(altura)  
         plt.grid(True, lw = 0.5, ls = '--', c = '.75')
         
@@ -28,7 +62,7 @@ def addGrafico( altura,color,columna,nombre,puntos_eje_x, datos_por_sensor_y,eti
         print ("Error Dibujando grafica " + nombre)
         print(ex)
         
-def dibujar_grafica(datos_brutos_experimento):
+def dibujar_grafica(datos_brutos_experimento,fecha, hora, minuto):
     '''
     Funcion para realizar la representacion de la grafica con los datos que se van adquiriendo de ARDUINO
     Esta sera la grafica que visualizamos en la maquina en la que se ejecuta el bot
@@ -38,10 +72,10 @@ def dibujar_grafica(datos_brutos_experimento):
     recibe una lista que contiene elementos que a su vez son listas/tuplas con todos los datos de interes:
 
     '''
-
+    global fig 
     try:
         
-        print (epochDate(time.time()), " DEBUG >> dibujando grafica")
+        print (utils.epochDate(time.time()), " DEBUG >> dibujando grafica")
         if(len(datos_brutos_experimento) >1440):
             datos_brutos_experimento = datos_brutos_experimento[-1440:]
         # [ [              1               ], [              2               ], ....]   
@@ -115,8 +149,8 @@ def dibujar_grafica(datos_brutos_experimento):
                 muestrasHoraEnCurso = n_muestras - n # localizado el ultimo cambio de hora,
                                                      # las muestras que queden son las de la hora en curso
         # Titulo de la ventana
-        plt.title('Captura de datos Experimento BIO 2019, v1.3')
-        fig.canvas.set_window_title('INOPYA')
+        plt.title('Captura de datos Experimento BIO 2020, v1.5')
+        fig.canvas.set_window_title('Orignal by INOPYA')
         
         addGrafico(911,'red',0,'Temp',puntos_eje_x, datos_por_sensor_y,etiqueta,orden,minimos_maximos)
         addGrafico(912,'green',1,'Humedad',puntos_eje_x, datos_por_sensor_y,etiqueta,orden,minimos_maximos)
@@ -128,8 +162,8 @@ def dibujar_grafica(datos_brutos_experimento):
         addGrafico(918,'gray',7,'Temp. L.',puntos_eje_x, datos_por_sensor_y,etiqueta,orden,minimos_maximos)
         addGrafico(919,'purple',8,'Conduct',puntos_eje_x, datos_por_sensor_y,etiqueta,orden,minimos_maximos)
 
-        label_eje_x = 'MUESTRA:  ' +str(len(lista_Datos_Experimento_Bio)) +' (' + str(muestrasHoraEnCurso)+')' + \
-        '   FECHA:  ' + reloj.fecha + '     HORA LOCAL:  ' + ('00'+str(HORA))[-2:] + ':' +('00'+str(MINUTO))[-2:]
+        label_eje_x = 'MUESTRA:  ' +str(len(datos_brutos_experimento)) +' (' + str(muestrasHoraEnCurso)+')' + \
+        '   FECHA:  ' + fecha + '     HORA LOCAL:  ' + ('00'+str(hora))[-2:] + ':' +('00'+str(minuto))[-2:]
 
         plt.xlabel(label_eje_x) #comun para los dos subplots
 
