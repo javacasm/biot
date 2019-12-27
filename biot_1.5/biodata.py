@@ -28,18 +28,9 @@ https://www.lfd.uci.edu/~gohlke/pythonlibs/
 # IMPORTACION DE MODULOS
 #--------------------------------------------------------
 
-# TELEGRAM
-import telegram
-from telegram import ReplyKeyboardMarkup
-from telegram.error import NetworkError, Unauthorized
+#
 
 
-# ACCESO A DATOS EN SERVIDORES (usado por telegram)
-import json 
-import requests
-
-### EXPRESIONES REGULARES
-##import re # lo usamos para verificar los email  (sin uso en este montaje)
 
 
 # FILTRADO DE ERRORES
@@ -48,47 +39,16 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # TIEMPOS, FECHAS
-from time import sleep      #pausas...
-import datetime
-
-# EMAIL
-import smtplib
-# librerias  para construir el mensaje
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText 
-# librerias para adjuntar archivos
-from email.mime.base import MIMEBase
-from email import encoders 
+# from time import sleep      #pausas...
+#import datetime
 
 
 #INTERACTUAR CON EL SISTEMA OPERATIVO
     
-import sys              #Conocer el tipo de sistema operativo
+# import sys              #Conocer el tipo de sistema operativo
 import time             #manejo de funciones de tiempo (fechas, horas, pausas...)
 import os               #manejo de funciones del sistema operativo 
-from os import walk     #funciones para movernos por directorios
-
-
-# ACCESO AL PUERTO SERIE (para comunicarse con Arduino)
-import serial  
-
-
-# REPRESENTACION GRAFICA DE DATOS
-import matplotlib                               #funcionalidad para representacion grafica de datos
-import matplotlib.pyplot as plt                 #por comodidad al llamar esta funcionalidad
-from matplotlib.ticker import MultipleLocator   #para crear leyendas en los graficos
-
-
-# FUNCIONES MATEMATICAS AVANZADAS
-import numpy as np
-import math
-
-
-# 'SERIALIZACION' DE OBJETOS (para manejar el salvado de datos)
-try:  
-    import cPickle as pickle  
-except ImportError:  
-    import pickle  
+# from os import walk     #funciones para movernos por directorios
 
 
 
@@ -100,29 +60,24 @@ import config
 
 
 #Ruta absoluta en la que se encuentra el script. Util apra las llamadas desde el inicio del sistema
-RUTA_PROGRAMA = os.path.dirname(os.path.abspath(__file__)) +'/'
-NOMBRE_SCRIPT_EN_EJECUCION = os.path.basename(__file__)
-RUTA_BACKUP = ''  #RUTA_BACKUP = 'backup/'
+ruta_programa = os.path.dirname(os.path.abspath(__file__)) +'/'
+nombreScriptEjecucion = os.path.basename(__file__)
+
 
 
 
 print ("==================================================")
-print ("\nRuta ABSOUTA DEL PROGRAMA:\n", RUTA_PROGRAMA)
-print ("\nNombre del fichero en ejecucion:\n", NOMBRE_SCRIPT_EN_EJECUCION)
+print ("\nRuta ABSOUTA DEL PROGRAMA:\n", ruta_programa)
+print ("\nNombre del fichero en ejecucion:\n", nombreScriptEjecucion)
 print ("\n==================================================\n\n")
 
 
-SerialDelay = 0.5                   #tiempo entre llamadas del puerto (en segundos), para que pueda reaccionar.
-                                    #No usar tiempos inferiores a 0.25 segundos 
 
 FLAG_momento_salvado_datos = True   #para controlar el momento de salvado automatico de los datos
 FLAG_backup_datos_Enabled = True    #para permitir (o no) el salvado automatico y periodico de los datos
 
 FLAG_reinicio_Arduino = True        #control de si es la primera vez que estamos intentando acceder a arduino
                                     #para evitar errores por variables que aun no se hayan podido cargar
-
-FLAG_buscandoConexion = True        #bandera apra el control de reconexiones
-                                    #en caso de que se pierda la comunicacion con arduino
 
 FLAG_estacion_online = True         #podemos desactivala si no vamos a hacer uso de telegram y correo
 
@@ -144,9 +99,9 @@ minuto_dibujar_grafica = -1
 minuto_error_grafica = -1
 minuto_error_arduino  = -1
 
-INTERVALO_BACKUP = 10               #intervalo en minutos para copias de seguridad 
 
-VELOCIDAD_PUERTO_SERIE = 115200
+
+
 
 valor_sensor_Now = []
 ultimo_valor_sensor_valido = []
@@ -202,10 +157,10 @@ del que se conecto inicialmente
 
 import arduinoUtils
 
-puertoDetectado = arduinoUtils.detectarPuertoArduino() #detactamos automaticamente el puerto
+arduinoSerialPort,puertoDetectado = arduinoUtils.detectarPuertoArduino() #detactamos automaticamente el puerto
 
 if (puertoDetectado != ''):
-    arduinoSerialPort = serial.Serial(puertoDetectado, VELOCIDAD_PUERTO_SERIE) #usamos el puerto detectado
+    # arduinoSerialPort = serial.Serial(puertoDetectado, VELOCIDAD_PUERTO_SERIE) #usamos el puerto detectado
     print ("\n ** ARDUINO CONECTADO EN " + puertoDetectado + " ** \n")
 
 else:
@@ -215,10 +170,10 @@ else:
     tiempoInicio = time.time()
     ActualTime = time.time()
     while (ActualTime - tiempoInicio < 60): 
-        puertoDetectado = arduinoUtils.detectarPuertoArduino() #detactamos automaticamente el puerto
+        arduinoSerialPort, puertoDetectado = arduinoUtils.detectarPuertoArduino() #detactamos automaticamente el puerto
         ActualTime = time.time()
         if (puertoDetectado != ''):
-            arduinoSerialPort = serial.Serial(puertoDetectado, VELOCIDAD_PUERTO_SERIE) #usamos el puerto detectado
+            # arduinoSerialPort = serial.Serial(puertoDetectado, VELOCIDAD_PUERTO_SERIE) #usamos el puerto detectado
             print ("\n ** ARDUINO CONECTADO EN " + puertoDetectado + " ** ")
             break
 
@@ -241,22 +196,25 @@ asociados a la adquisicion de datos y su representacion, si no, salimos
 Entramos aqui solo si se ha detectado una placa arduino o compatible para la adquisicion de datos
 
 '''
+import graficos
+import utils
+import Datos
+import TelegramUtils
 
 if puertoDetectado:  
-    # Se prepara la zona de trabajo de la grafica 
-    plt.ion() # declaramos la sesión como interactiva
-    fig = plt.figure()
 
+    graficos.initPlot()
+    
     #hacemos una consulta a la estacion para despertarla (por si acaso)
     try:
-        consultar_Arduino(0.5)
+        arduinoUtils.consultar_Arduino(arduinoSerialPort,0.5)
     except:
         pass
 
     # **** ENVIO DE MENSAJE PARA NOTIFICAR AL ADMINISTRADOR DE UN REINICIO DEL SISTEMA  ****
-    if FLAG_estacion_online == True and ADMIN_USER != None: 
+    if FLAG_estacion_online == True and config.ADMIN_USER != None: 
         try:
-            send_message ('Estacion Reiniciada\n'+NOMBRE_SCRIPT_EN_EJECUCION, ADMIN_USER)
+            send_message ('Estacion Reiniciada\n'+nombreScriptEjecucion, ADMIN_USER)
         except:
             pass
      
@@ -264,15 +222,15 @@ if puertoDetectado:
     
     try:   
         #carga de la lista que continene los datos acumuados (grafica completa)
-        file_datos_experimento = RUTA_PROGRAMA + RUTA_BACKUP + FICHERO_DATOS_EXPERIMENTO
-        estado_carga, lista_Datos_Experimento_Bio = cargar_datos_desde_fichero(file_datos_experimento)
+        file_datos_experimento = ruta_programa + config.RUTA_BACKUP + config.FICHERO_DATOS_EXPERIMENTO
+        estado_carga, lista_Datos_Experimento_Bio = Datos.cargar_datos_desde_fichero(file_datos_experimento)
         if estado_carga == False:
             lista_Datos_Experimento_Bio = []
             print ("lista_Datos_Experimento_Bio[]  no pudo ser restaurada")
             print ("buscando copia de seguridad...")
             longitud_extension = len(file_datos_experimento.split(".")[-1])
             nombre_con_ruta_backup = file_datos_experimento[:-longitud_extension] + "bak"
-            estado_carga, lista_Datos_Experimento_Bio = cargar_datos_desde_fichero(nombre_con_ruta_backup)                                                                            
+            estado_carga, lista_Datos_Experimento_Bio = Datos.cargar_datos_desde_fichero(nombre_con_ruta_backup)                                                                            
             if(estado_carga==False):
                 print ("ERROR CARGANDO DATOS, se reinicia la toma de datos desde cero")
                 
@@ -310,16 +268,16 @@ if puertoDetectado:
                     
         # ========== ADQUISICION de datos desde ARDUINO ================================================================
         try:
-            if time.time() >= minuto_adquisicion_datos + TIEMPO_ENTRE_MUESTRAS:
+            if time.time() >= minuto_adquisicion_datos + config.TIEMPO_ENTRE_MUESTRAS:
                 muestra_nuevo_formato = []
-                #print (epochDate(time.time()), "DEBUG >> peticion")
-                muestra_datos = consultar_Arduino(.5)
+                #print (utils.epochDate(time.time()), "DEBUG >> peticion")
+                muestra_datos = arduinoUtils.consultar_Arduino(arduinoSerialPort,.5)
                 while muestra_datos == None:
-                    #print (epochDate(time.time()), " DEBUG >> muestra de datos NONE")
-                    muestra_datos = consultar_Arduino(2) #si hubo fallo, damos un poco mas de tiempo en las siguientes peticiones
+                    #print (utils.epochDate(time.time()), " DEBUG >> muestra de datos NONE")
+                    muestra_datos = arduinoUtils.consultar_Arduino(arduinoSerialPort,2) #si hubo fallo, damos un poco mas de tiempo en las siguientes peticiones
 
                 if muestra_datos != None and str(type(muestra_datos)) == "<class 'list'>":
-                    print (epochDate(time.time()), " DEBUG >> muestra de datos: ", muestra_datos)
+                    print (utils.epochDate(time.time()), " DEBUG >> muestra de datos: ", muestra_datos)
 
                     ##comprobar que la muestra es correcta  (establecer las condiciones que deseemos, mayores de un valor, menores, en un rango...)
                     if muestra_datos[0] !=None and muestra_datos[1] !=None and muestra_datos[2] !=None:
@@ -332,7 +290,7 @@ if puertoDetectado:
                         
                         #si hay muestra valida, Creacion de METADATOS
                         muestra_metadatos = []
-                        muestra_metadatos.append(ID_ESTACION_BIO)  # Sustituir con un ID propio de cada estacion para que los datos
+                        muestra_metadatos.append(config.ID_ESTACION_BIO)  # Sustituir con un ID propio de cada estacion para que los datos
                                                             # sean siempre reconocibles aun que se trunque un archivo
                         muestra_metadatos.append(FECHA) # Insertamos los datos de fecha y hora en la lista
                         muestra_metadatos.append(RELOJ)
@@ -349,7 +307,7 @@ if puertoDetectado:
 
                         #Ahora la muestra es completa: [[metadatos], [Valores actuales]]
 
-                        #print (epochDate(time.time()), " DEBUG >> muestra_nuevo_formato: ", muestra_nuevo_formato)
+                        #print (utils.epochDate(time.time()), " DEBUG >> muestra_nuevo_formato: ", muestra_nuevo_formato)
 
                         lista_Datos_Experimento_Bio.append(muestra_nuevo_formato)                  
 
@@ -369,7 +327,7 @@ if puertoDetectado:
         except:
             if MINUTO != minuto_error_arduino:       #solo si ha pasado un minuto del ultimo error se notifica
                 minuto_error_arduino = MINUTO        #refresco la referencia con el minuto actual
-                print (epochDate(time.time()),"ERROR en las lecturas de arduino")
+                print (utils.epochDate(time.time()),"ERROR en las lecturas de arduino")
 
  
 
@@ -377,38 +335,38 @@ if puertoDetectado:
         try:           
             if len(lista_Datos_Experimento_Bio) > 1:
                 if MINUTO != minuto_dibujar_grafica:
-                    plt.clf() # esto limpia la información del  área donde se pintan los graficos.
+                    graficos.clear()
 
                     #podemos aprovechar la funcion de dibujado para extraer los datos de interes como max, min, medias...
                     #que por ahora no usamos para nada, pero ahí queda
-                    datos_de_interes = dibujar_grafica(lista_Datos_Experimento_Bio)
+                    datos_de_interes = graficos.dibujar_grafica(lista_Datos_Experimento_Bio,reloj.fecha,HORA,MINUTO)
                     
-                    plt.pause(.025) # Pausa para el refresco del grafico. Es necesaria, si no, no se ve la representacion :(
+                    graficos.pausePlot(.025) # Pausa para el refresco del grafico. Es necesaria, si no, no se ve la representacion :(
                     minuto_dibujar_grafica = MINUTO
             
         except:
-            print (epochDate(time.time()),"ERROR al dibujar grafica")
+            print (utils.epochDate(time.time()),"ERROR al dibujar grafica")
             time.sleep(25) # pausa de 25 segundos para no llenar la pantalla de mensajes de error
 
                 
         # ========== COPIA de SEGURIDAD de datos automaticamente cada cierto tiempo (INTERVALO_BACKUP) ==================
         try:      
-            if  FLAG_backup_datos_Enabled == True and FLAG_momento_salvado_datos == True and MINUTO % INTERVALO_BACKUP == 0 and SEGUNDO < 20:
-                ruta = RUTA_PROGRAMA + RUTA_BACKUP
-                nombreCompletoDat = ruta + FICHERO_DATOS_EXPERIMENTO
+            if  FLAG_backup_datos_Enabled == True and FLAG_momento_salvado_datos == True and MINUTO % config.INTERVALO_BACKUP == 0 and SEGUNDO < 20:
+                ruta = ruta_programa + config.RUTA_BACKUP
+                nombreCompletoDat = ruta + config.FICHERO_DATOS_EXPERIMENTO
                 
-                print (epochDate(time.time())," Realizando copias de seguridad...")                
-                salvar_Backup_datos(lista_Datos_Experimento_Bio, nombreCompletoDat)
+                print (utils.epochDate(time.time())," Realizando copias de seguridad...")                
+                Datos.salvar_Backup_datos(lista_Datos_Experimento_Bio, nombreCompletoDat)
                 print("\t\t\tOK AUTO_BACKUP DATOS")
                 
                 #convertir a TXT y salvar
-                nombreCompletoTxt = ruta + FICHERO_TXT_EXPERIMENTO
-                convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreCompletoTxt, cabecera=cabeceraTXTdatos)
+                nombreCompletoTxt = ruta + config.FICHERO_TXT_EXPERIMENTO
+                Datos.convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreCompletoTxt, cabecera=cabeceraTXTdatos)
                 print("\t\t\tOK AUTO_BACKUP en formato TXT")
 
                 #guardar una copia de la representacion grafica
-                nombreCompletoGrafica =  ruta + "experimento_bio.png"
-                plt.savefig(nombreCompletoGrafica)
+                nombreCompletoGrafica =  ruta + config.FICHERO_GRAFICA_EXPERIMENTO
+                graficos.saveFig(nombreCompletoGrafica)
                 print("\t\t\tOK AUTO_BACKUP datos graficos")
                 # si la bandera se iguala a FALSE en este punto, garantizamos que todo ha salido bien
                 FLAG_momento_salvado_datos = False
@@ -425,7 +383,7 @@ if puertoDetectado:
         if FLAG_estacion_online == True:
             try:
                 #Recibir nuevos mensajes desde TELEGRAM
-                atenderTelegramas(telegram_bot_experimento_bio)
+                TelegramUtils.atenderTelegramas()
             except:
                 print ("\nERROR accediendo a telegram\n")
 
@@ -434,10 +392,10 @@ if puertoDetectado:
             try:
                 #por si alguien nos pide la grafica          
                 if FLAG_enviar_PNG == True:
-                    plt.savefig(RUTA_PROGRAMA + RUTA_BACKUP + FICHERO_GRAFICA_EXPERIMENTO)  
+                    graficos.savefig(ruta_programa + config.RUTA_BACKUP + FICHERO_GRAFICA_EXPERIMENTO)  
                        
                     url = URL+"sendPhoto";
-                    files = {'photo': open(RUTA_PROGRAMA + RUTA_BACKUP + FICHERO_GRAFICA_EXPERIMENTO, 'rb')}
+                    files = {'photo': open(ruta_programa + config.RUTA_BACKUP + FICHERO_GRAFICA_EXPERIMENTO, 'rb')}
                     data = {'chat_id' : chat_id}
                     r= requests.post(url, files=files, data=data)
                     FLAG_enviar_PNG = False
@@ -450,7 +408,7 @@ if puertoDetectado:
                 #por si alguien nos pide la grafica          
                 if FLAG_enviar_TXT == True:                      
                     url = URL+"sendDocument";
-                    files = {'document': open(RUTA_PROGRAMA + RUTA_BACKUP + FICHERO_TXT_EXPERIMENTO, 'rb')}
+                    files = {'document': open(ruta_programa + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO, 'rb')}
                     data = {'chat_id' : chat_id}
                     r= requests.post(url, files=files, data=data)
                     FLAG_enviar_TXT = False
@@ -463,29 +421,29 @@ if puertoDetectado:
                 #por si alguien nos pide borrar datos iniciales (antiguos)    
                 if FLAG_delete_old == True:
                     if len(lista_Datos_Experimento_Bio) > 17:
-                            lista_Datos_Experimento_Bio = lista_Datos_Experimento_Bio[15:]
+                        lista_Datos_Experimento_Bio = lista_Datos_Experimento_Bio[15:]
                     else:
                         send_message ('datos insuficuentes, intentalo mas tarde', chat_id)
                     FLAG_delete_old = False
             except:
                 print ("ERROR al borrar las 15 primeras muestras")
-                muestra_nuevo_formato
+                # muestra_nuevo_formato
             try:
                 #por si alguien nos pide borrar datos finales (recientes)        
                 if FLAG_delete_new == True:
                     if len(lista_Datos_Experimento_Bio) > 17:
-                            lista_Datos_Experimento_Bio = lista_Datos_Experimento_Bio[:-15]
+                        lista_Datos_Experimento_Bio = lista_Datos_Experimento_Bio[:-15]
                     else:
                         send_message ('datos insuficuentes, intentalo mas tarde', chat_id)
                     FLAG_delete_new = False
             except:
                 print ("ERROR al borrar las 15 ultimas muestras")                
-        plt.pause(.025)  ## refresco continuo del area de la grafica.
-    plt.close('all') 
+        graficos.pausePlot(0.05)
+    graficos.closePlot()
 
 
 if puertoDetectado:                               
-    print ("\n\> PROGRAMA TERMINADO - FIN DE ADQUISICION DE DATOS\n")
+    print ("\n> PROGRAMA TERMINADO - FIN DE ADQUISICION DE DATOS\n")
 
 else:
     print ("     << ERROR >> MICROCONTROLADOR NO PRESENTE\n")
