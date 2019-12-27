@@ -2,6 +2,12 @@
 
 import sys
 
+# ACCESO AL PUERTO SERIE (para comunicarse con Arduino)
+import serial  
+import time
+import config
+
+
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
     
@@ -20,9 +26,9 @@ def detectarPuertoArduino():   #version mejorada 2018
     
     #Definir los prefijos de los posibles puertos serie disponibles tanto en linux como windows
     puertosWindows = ['COM']
-    puertosLinux = ['/dev/ttyACM',  '/dev/ttyUSB', '/dev/ttyAMA','/dev/ttyS', '/dev/ttyACA']
+    puertosLinux = ['/dev/ttyUSB', '/dev/ttyACM',   '/dev/ttyAMA','/dev/ttyS', '/dev/ttyACA']
     
-    puertoSerie = ''
+#    puertoSerie = ''
     if (sistemaOperativo == 'linux' or sistemaOperativo == 'linux2'):
         listaPuertosSerie = puertosLinux
         index = 0
@@ -31,31 +37,35 @@ def detectarPuertoArduino():   #version mejorada 2018
         index = 4  # Windows suele reservar los 3 primeros puertos. Cambiar este indice si no detectamos nada
         
     for sufijo in listaPuertosSerie:
-        for n in range(index, 35):
+        for n in range(index, 5):
             try:
                 # intentar crear una instancia de Serial para 'dialogar' con ella
                 nombrePuertoSerie = sufijo + '%d' %n
                 print ("Probando... ", nombrePuertoSerie)
                 #time.sleep(0.5)
-                serialTest = serial.Serial(nombrePuertoSerie, VELOCIDAD_PUERTO_SERIE)
-                serialTest.close()
-                return nombrePuertoSerie
-
-            except:
+                serialTest = serial.Serial(nombrePuertoSerie, config.VELOCIDAD_PUERTO_SERIE)
+                # serialTest.close()
+                # return nombrePuertoSerie
+                return serialTest,nombrePuertoSerie
+            except NameError as error:
+                pass
+            except Exception as error:
+                print('Exception',error)
                 pass
         
-    return '' #si llegamos a este punto es que no hay Arduino disponible
+    return None, ''  #si llegamos a este punto es que no hay Arduino disponible
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------  
 
-def consultar_Arduino(PAUSA = 0.5):
+def consultar_Arduino(arduinoSerialPort,PAUSA):
     '''
     Funcion para acceso a ARDUINO y obtencion de datos en tiempo real   ---
     version mejorada para evitar errores de comunicacion
     ante eventuales fallos de la conexion.
     '''
-    global arduinoSerialPort, FLAG_buscandoConexion
+   #  global arduinoSerialPort
+    FLAG_buscandoConexion = False
 
     try:
         arduinoSerialPort.flushInput() #eliminar posibles restos de lecturas anteriores
@@ -101,10 +111,10 @@ def consultar_Arduino(PAUSA = 0.5):
         print ("    Reconectando...")
         while (ActualTime - tiempoInicio < 10): #Control del tiempo entre consultas de ARDUINO  :)
             arduinoSerialPort.close() #cerrar puerto anterior por seguridad
-            puertoDetectado = detectarPuertoArduino() #detactamos automaticamente el puerto
+            arduinoSerialPort,puertoDetectado = detectarPuertoArduino() #detactamos automaticamente el puerto
             ActualTime = time.time()
             if (puertoDetectado != ''):
-                arduinoSerialPort = serial.Serial(puertoDetectado, VELOCIDAD_PUERTO_SERIE) #usamos el puerto detectado
+               # arduinoSerialPort = serial.Serial(puertoDetectado, VELOCIDAD_PUERTO_SERIE) #usamos el puerto detectado
                 print ("\n")
                 FLAG_buscandoConexion = False
                 print (" ** COMUNICACION REESTABLECIDA en "  + puertoDetectado + " ** \n")
