@@ -27,7 +27,7 @@ def enviarEmail(nombreRutaConExtension):
     para usarlo como texto en el asunto del mensaje
     '''
 
-    global config.lista_correo_experimento
+    # global config.lista_correo_experimento
     #Esta lista contiene objetos tipo cartero,
     #con la id de telegram  .user  y las direcciones de correo .email
     #desgranamos la lista para hacer una nueva lista de solo direcciones de email
