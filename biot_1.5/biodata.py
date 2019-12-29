@@ -190,6 +190,7 @@ import graficos
 import utils
 import Datos
 import TelegramUtils
+import emailUtil
 
 if puertoDetectado:  
 
@@ -415,11 +416,11 @@ if puertoDetectado:
                 print("Error al salvar los datos")
             try:
                 if TelegramUtils.FLAG_send_DATA == True:
-                    send_message("procesando peticion...", chat_id)
+                    TelegramUtils.send_message("procesando peticion...")
                     nombreRutaConExtension = config.ruta_programa + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO
                     status1 = Datos.convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreRutaConExtension, \
                                                      cabecera=cabeceraTXTdatos)
-                    status2 = emailutils.enviarEmail(nombreRutaConExtension)
+                    status2 = emailUtil.enviarEmail(nombreRutaConExtension)
                     if(status1==True and status2==True):
                         message ="EMAIL enviado correctamente"
                     else:
