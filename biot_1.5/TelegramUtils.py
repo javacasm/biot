@@ -13,6 +13,8 @@ import requests
 
 
 import config
+import emailUtil
+import Datos
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 # FUNCIONES TELERAM
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
@@ -22,6 +24,7 @@ import config
 #URL de la API de TELEGRAM
 URL = "https://api.telegram.org/bot{}/".format(config.TOKEN)
 
+chat_id = 0
 
 update_id = None
 
@@ -42,6 +45,18 @@ listaComandos = ["/ayuda - Mostrar esta Ayuda", \
                  "/save - Realiza una copia de seguridad","\n"]
 
 
+
+FLAG_enviar_PNG = False             #controla el proceso de envio de grafica al usuario
+FLAG_enviar_TXT = False             #controla el proceso de envio de fichero de datos al usuario
+
+FLAG_delete_old = False           #control de borrado de los primeros datos tomados
+FLAG_delete_new = False             #control de borrado de los ultimos datos tomados
+
+FLAG_pruebas = False                #Para hacer pruebas con telegram (sin uso)
+FLAG_enviar_INFO = False
+FLAG_save_DATA = False
+FLAG_send_DATA = False
+
 #bucle para generar el texto encadenando todos los comandos de ayuda.
 #Para el mensaje que se envia por telegram al pedir '/ayuda'
 listaComandosTxt = ""
@@ -59,10 +74,22 @@ def get_url(url):
     content = response.content.decode("utf8")
     return content
 
+def send_picture(picture):
+    url = URL+"sendPhoto";
+    files = {'photo': open(picture, 'rb')}
+    data = {'chat_id' : chat_id}
+    r= requests.post(url, files=files, data=data)
+
+def send_document(doc):
+    url = URL+"sendDocument";
+    files = {'document': open(doc, 'rb')}
+    data = {'chat_id' : chat_id}
+    r= requests.post(url, files=files, data=data)
+
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
 
-def send_message(text, chat_id):
+def send_message(text):
     '''
     Funcion para enviar telergamas atraves de la API
     '''
@@ -84,10 +111,10 @@ def atenderTelegramas():
     complejos que contiene parametros
     '''
     global text, chat_id, chat_time, comando, chat_user_name
-    global FLAG_enviar_PNG, FLAG_pruebas, FLAG_enviar_TXT, FLAG_delete_old, FLAG_delete_new
+    global FLAG_enviar_PNG, FLAG_pruebas, FLAG_enviar_TXT, FLAG_delete_old, FLAG_delete_new, FLAG_enviar_INFO,FLAG_save_DATA,FLAG_send_DATA
 
     global update_id
-    chat_id = 0
+    
     try:    
         # Request updates after the last update_id
         for update in telegram_bot_experimento_bio.get_updates(offset=update_id, timeout=0): #timeout=5, si nos da problemas con internet lento
@@ -110,29 +137,12 @@ def atenderTelegramas():
                                             
                     # ===============   INTERPRETAR LOS COMANDOS QUE LLEGAN Y ACTUAR EN CONSECUENCIA   ===============
                     
-                    if comando == "/send" and (chat_id == ADMIN_USER or ADMIN_USER == None):  #decidir quien puede enviar correos
-                        send_message("procesando peticion...", chat_id)
-                        nombreRutaConExtension = RUTA_PROGRAMA + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO
-                        status1 = convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreRutaConExtension, \
-                                                         cabecera=cabeceraTXTdatos)
-                        status2 = enviarEmail(nombreRutaConExtension)
-                        if(status1==True and status2==True):
-                            send_message("EMAIL enviado correctamente", chat_id)
-                        else:
-                            send_message("ERROR al enviar Email. Intentalo mas tarde", chat_id)
+                    if comando == "/send" and (chat_id == config.ADMIN_USER or config.ADMIN_USER == None):  #decidir quien puede enviar correos
+                        FLAG_send_DATA = True
                         return
           
-                    if comando == "/save" and (chat_id == ADMIN_USER or ADMIN_USER == None):  #solo el administrador puede forzar el salvado de datos no programado
-                        nombre_con_ruta = RUTA_PROGRAMA + RUTA_BACKUP + FICHERO_DATOS_EXPERIMENTO
-                        status1 = salvar_Backup_datos(lista_Datos_Experimento_Bio, nombre_con_ruta)
-                        nombreCompleto = RUTA_PROGRAMA + RUTA_BACKUP + FICHERO_TXT_EXPERIMENTO
-                        status2 = convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreCompleto, \
-                                                         cabecera=cabeceraTXTdatos)
-
-                        if status1==True and status2==True:
-                            send_message("OK, Copia de seguridad realizada", chat_id)
-                        else:
-                            send_message("ERROR. No se pudo realizar copia de seguridad", chat_id)
+                    if comando == "/save" and (chat_id == config.ADMIN_USER or config.ADMIN_USER == None):  #solo el administrador puede forzar el salvado de datos no programado
+                        FLAG_save_DATA = True
                         return
 
                     # Lista de comandos para usuarios basicos (clientes)           
@@ -141,27 +151,8 @@ def atenderTelegramas():
                         return
                     
                     if comando == "/info":
-                        send_message ("============================\n" +
-                                      "  ESTACION ID: <<" + ID_ESTACION_BIO + ">>\n"
-                                      "  HORARIO  UTC/GMT +1\n" +
-                                      "  " + reloj.fecha + "  " + reloj.reloj + "\n" +
-                                      "============================\n\n" +
-                                      "VALORES ACTUALES: \n\n" +
-                                      " temperatura:   " + str(valor_sensor_Now[0]) + " ºC\n" +
-                                      " Humedad:   " + str(valor_sensor_Now[1]) + " %\n" +
-                                      " PH:   " + str(valor_sensor_Now[2])+"\n" +
-                                      " CO2:   " + str(valor_sensor_Now[3]) + " ppm\n" +
-                                      " Rojo:   " + str(valor_sensor_Now[4]) + " \n" +
-                                      " Azul:   " + str(valor_sensor_Now[5]) + " \n" +
-                                      " Verde:   " + str(valor_sensor_Now[9]) + " \n"   +
-                                      " Presion:   " + str(valor_sensor_Now[6]) + " atm\n" +
-                                      " Conductividad:   "+ str(valor_sensor_Now[7]) + " \n" +
-                                      " Temperatura liquido:   "+ str(valor_sensor_Now[8]) + " ºC\n"
-                                      , chat_id)
-                        
+                        FLAG_enviar_INFO = True
                         return
-                        
-                       
 
                     if comando == "/fig":
                         FLAG_enviar_PNG = True
@@ -171,12 +162,13 @@ def atenderTelegramas():
                         FLAG_enviar_TXT = True
                         return
                      
-                    if comando == "/deleteOld" and (chat_id == ADMIN_USER or ADMIN_USER == None):
+                    if comando == "/deleteOld" and (chat_id == config.ADMIN_USER or config.ADMIN_USER == None):
                         FLAG_delete_old = True
                         return
-                    if comando == "/deleteNew" and (chat_id == ADMIN_USER or ADMIN_USER == None):
+                    
+                    if comando == "/deleteNew" and (chat_id == config.ADMIN_USER or config.ADMIN_USER == None):
                         FLAG_delete_new = True
-                        return                    
+                        return
                 except:
                     print ("----- ERROR ATENDIENDO TELEGRAMAS ----------------------")                      
                 if chat_id != 0:
