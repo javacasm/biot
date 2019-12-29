@@ -60,18 +60,16 @@ import config
 
 
 #Ruta absoluta en la que se encuentra el script. Util apra las llamadas desde el inicio del sistema
-ruta_programa = os.path.dirname(os.path.abspath(__file__)) +'/'
+
 nombreScriptEjecucion = os.path.basename(__file__)
 
 
 
 
 print ("==================================================")
-print ("\nRuta ABSOUTA DEL PROGRAMA:\n", ruta_programa)
+print ("\nRuta ABSOUTA DEL PROGRAMA:\n", config.ruta_programa)
 print ("\nNombre del fichero en ejecucion:\n", nombreScriptEjecucion)
 print ("\n==================================================\n\n")
-
-
 
 FLAG_momento_salvado_datos = True   #para controlar el momento de salvado automatico de los datos
 FLAG_backup_datos_Enabled = True    #para permitir (o no) el salvado automatico y periodico de los datos
@@ -80,14 +78,6 @@ FLAG_reinicio_Arduino = True        #control de si es la primera vez que estamos
                                     #para evitar errores por variables que aun no se hayan podido cargar
 
 FLAG_estacion_online = True         #podemos desactivala si no vamos a hacer uso de telegram y correo
-
-FLAG_enviar_PNG = False             #controla el proceso de envio de grafica al usuario
-FLAG_enviar_TXT = False             #controla el proceso de envio de fichero de datos al usuario
-
-FLAG_delete_old = False           #control de borrado de los primeros datos tomados
-FLAG_delete_new = False             #control de borrado de los ultimos datos tomados
-
-FLAG_pruebas = False                #Para hacer pruebas con telegram (sin uso)
 
 
 ################   " <---------- METADATOS ------->   <------- SENSORES -------> "
@@ -222,7 +212,7 @@ if puertoDetectado:
     
     try:   
         #carga de la lista que continene los datos acumuados (grafica completa)
-        file_datos_experimento = ruta_programa + config.RUTA_BACKUP + config.FICHERO_DATOS_EXPERIMENTO
+        file_datos_experimento = config.ruta_programa + config.RUTA_BACKUP + config.FICHERO_DATOS_EXPERIMENTO
         estado_carga, lista_Datos_Experimento_Bio = Datos.cargar_datos_desde_fichero(file_datos_experimento)
         if estado_carga == False:
             lista_Datos_Experimento_Bio = []
@@ -352,7 +342,7 @@ if puertoDetectado:
         # ========== COPIA de SEGURIDAD de datos automaticamente cada cierto tiempo (INTERVALO_BACKUP) ==================
         try:      
             if  FLAG_backup_datos_Enabled == True and FLAG_momento_salvado_datos == True and MINUTO % config.INTERVALO_BACKUP == 0 and SEGUNDO < 20:
-                ruta = ruta_programa + config.RUTA_BACKUP
+                ruta = config.ruta_programa + config.RUTA_BACKUP
                 nombreCompletoDat = ruta + config.FICHERO_DATOS_EXPERIMENTO
                 
                 print (utils.epochDate(time.time())," Realizando copias de seguridad...")                
@@ -386,56 +376,105 @@ if puertoDetectado:
                 TelegramUtils.atenderTelegramas()
             except:
                 print ("\nERROR accediendo a telegram\n")
-
+        # Comprobamos si tenemos alguna peticion que completar
         # ========== GESTIONAR PETICIONES  DE GRAFICA ==================================================================
-        if FLAG_estacion_online == True: 
             try:
                 #por si alguien nos pide la grafica          
-                if FLAG_enviar_PNG == True:
-                    graficos.savefig(ruta_programa + config.RUTA_BACKUP + FICHERO_GRAFICA_EXPERIMENTO)  
-                       
-                    url = URL+"sendPhoto";
-                    files = {'photo': open(ruta_programa + config.RUTA_BACKUP + FICHERO_GRAFICA_EXPERIMENTO, 'rb')}
-                    data = {'chat_id' : chat_id}
-                    r= requests.post(url, files=files, data=data)
-                    FLAG_enviar_PNG = False
+                if TelegramUtils.FLAG_enviar_PNG == True:
+                    picture = config.ruta_programa + config.RUTA_BACKUP + config.FICHERO_GRAFICA_EXPERIMENTO
+                    graficos.saveFig(picture)  
+                    TelegramUtils.send_picture(picture)
+                    TelegramUtils.FLAG_enviar_PNG = False
             except:
                 print ("ERROR al generar PNG para el cliente")
                 
         # ========== GESTIONAR PETICIONES  DE TXT ==================================================================
-        if FLAG_estacion_online == True: 
             try:
                 #por si alguien nos pide la grafica          
-                if FLAG_enviar_TXT == True:                      
-                    url = URL+"sendDocument";
-                    files = {'document': open(ruta_programa + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO, 'rb')}
-                    data = {'chat_id' : chat_id}
-                    r= requests.post(url, files=files, data=data)
-                    FLAG_enviar_TXT = False
+                if TelegramUtils.FLAG_enviar_TXT == True:                      
+                    doc = config.ruta_programa + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO
+                    TelegramUtils.send_document(doc)
+                    TelegramUtils.FLAG_enviar_TXT = False
             except:
                 print ("ERROR al enviar de datos en TXT al cliente") 
 
+            try:
+                if TelegramUtils.FLAG_save_DATA == True:
+                    nombre_con_ruta = config.ruta_programa + config.RUTA_BACKUP + config.FICHERO_DATOS_EXPERIMENTO
+                    status1 = Datos.salvar_Backup_datos(lista_Datos_Experimento_Bio, nombre_con_ruta)
+                    nombreCompleto = config.ruta_programa + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO
+                    status2 = Datos.convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreCompleto, \
+                                                         cabecera=cabeceraTXTdatos)
+                    if status1==True and status2==True:
+                        message = "OK, Copia de seguridad realizada"
+                    else:
+                        message ="ERROR. No se pudo realizar copia de seguridad"
+                    TelegramUtils.send_message(message)
+                    TelegramUtils.FLAG_save_DATA = False
+            except:
+                print("Error al salvar los datos")
+            try:
+                if TelegramUtils.FLAG_send_DATA == True:
+                    send_message("procesando peticion...", chat_id)
+                    nombreRutaConExtension = config.ruta_programa + config.RUTA_BACKUP + config.FICHERO_TXT_EXPERIMENTO
+                    status1 = Datos.convertir_Datos_to_TXT(lista_Datos_Experimento_Bio, nombreRutaConExtension, \
+                                                     cabecera=cabeceraTXTdatos)
+                    status2 = emailutils.enviarEmail(nombreRutaConExtension)
+                    if(status1==True and status2==True):
+                        message ="EMAIL enviado correctamente"
+                    else:
+                        message ="ERROR al enviar Email. Intentalo mas tarde"
+                    TelegramUtils.send_message(message)
+                    TelegramUtils.FLAG_send_DATA = False
+            except:
+                print("Error al enviar datos")
         # ========== GESTIONAR PETICIONES  DE BORRADO DE DATOS ==================================================================
-        if FLAG_estacion_online == True: 
+            try:
+                if TelegramUtils.FLAG_enviar_INFO == True:
+                    TelegramUtils.send_message ("============================\n" +
+                                  "  ESTACION ID: <<" + config.ID_ESTACION_BIO + ">>\n"
+                                  "  HORARIO  UTC/GMT +1\n" +
+                                  "  " + reloj.fecha + "  " + reloj.reloj + "\n" +
+                                  "============================\n\n" +
+                                  "VALORES ACTUALES: \n\n" +
+                                  " temperatura:   " + str(valor_sensor_Now[0]) + " ºC\n" +
+                                  " Humedad:   " + str(valor_sensor_Now[1]) + " %\n" +
+                                  " PH:   " + str(valor_sensor_Now[2])+"\n" +
+                                  " CO2:   " + str(valor_sensor_Now[3]) + " ppm\n" +
+                                  " Rojo:   " + str(valor_sensor_Now[4]) + " \n" +
+                                  " Azul:   " + str(valor_sensor_Now[5]) + " \n" +
+                                  " Verde:   " + str(valor_sensor_Now[9]) + " \n"   +
+                                  " Presion:   " + str(valor_sensor_Now[6]) + " atm\n" +
+                                  " Conductividad:   "+ str(valor_sensor_Now[7]) + " \n" +
+                                  " Temperatura liquido:   "+ str(valor_sensor_Now[8]) + " ºC\n")
+                    TelegramUtils.FLAG_enviar_INFO = False
+            except:
+                print("Error al enviar la info del estado actual")
+
+        # ========== GESTIONAR PETICIONES  DE BORRADO DE DATOS ==================================================================
             try:
                 #por si alguien nos pide borrar datos iniciales (antiguos)    
-                if FLAG_delete_old == True:
+                if TelegramUtils.FLAG_delete_old == True:
                     if len(lista_Datos_Experimento_Bio) > 17:
                         lista_Datos_Experimento_Bio = lista_Datos_Experimento_Bio[15:]
+                        message = 'Eliminados los 15 primeros datos'
                     else:
-                        send_message ('datos insuficuentes, intentalo mas tarde', chat_id)
-                    FLAG_delete_old = False
+                        message = 'datos insuficuentes, intentalo mas tarde'
+                    TelegramUtils.send_message (message)
+                    TelegramUtils.FLAG_delete_old = False
             except:
                 print ("ERROR al borrar las 15 primeras muestras")
                 # muestra_nuevo_formato
             try:
                 #por si alguien nos pide borrar datos finales (recientes)        
-                if FLAG_delete_new == True:
+                if TelegramUtils.FLAG_delete_new == True:
                     if len(lista_Datos_Experimento_Bio) > 17:
                         lista_Datos_Experimento_Bio = lista_Datos_Experimento_Bio[:-15]
+                        message = 'eliminados los ultimos 15 datos'
                     else:
-                        send_message ('datos insuficuentes, intentalo mas tarde', chat_id)
-                    FLAG_delete_new = False
+                        message = 'datos insuficuentes, intentalo mas tarde'
+                    TelegramUtils.send_message (message)
+                    TelegramUtils.FLAG_delete_new = False
             except:
                 print ("ERROR al borrar las 15 ultimas muestras")                
         graficos.pausePlot(0.05)
