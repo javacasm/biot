@@ -8,10 +8,6 @@ try:
 except ImportError:  
     import pickle  
 
-
-
-
-
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 # FUNCIONES CONTROL Y GESTION DE FICHEROS DE DATOS
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
