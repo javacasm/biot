@@ -147,7 +147,7 @@ def atenderTelegramas():
 
                     # Lista de comandos para usuarios basicos (clientes)           
                     if comando == "/ayuda":
-                        send_message (listaComandosTxt, chat_id)
+                        send_message (listaComandosTxt)
                         return
                     
                     if comando == "/info":
@@ -173,7 +173,7 @@ def atenderTelegramas():
                     print ("----- ERROR ATENDIENDO TELEGRAMAS ----------------------")                      
                 if chat_id != 0:
                     #ante cualquier comando desconocido devolvemos 'ok', para despistar a los que intenten 'probar suerte'
-                    send_message ("OK" ,chat_id)  
+                    send_message ("OK")  
         
     except:
         pass
