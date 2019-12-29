@@ -13,6 +13,7 @@ from email import encoders
 ### EXPRESIONES REGULARES
 ##import re # lo usamos para verificar los email  (sin uso en este montaje)
 
+import config
 
 # mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 # ENVIO DE EMAIL
