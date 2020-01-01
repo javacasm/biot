@@ -1,5 +1,7 @@
 # Configuracion
 
+import os               #manejo de funciones del sistema operativo 
+
 # v1.5
 
 
@@ -26,7 +28,7 @@ lista_correo_experimento = ['javacasm@gmail.com']      #quitar esta y poner la v
 
 
 #CLAVE para la API de telegram (token del bot)
-TOKEN = "PON AQUI TU TOKEN TELEGRAM" # quitar este y poner el de vuestro bot
+TOKEN = "892980687:AAEAr6zBV5GDFoGKhxzEjzz-yUMPmvNRV1Y" # quitar este y poner el de vuestro bot
 
 
 # Definimos la id del que sera el usuarios administrador y que dispondra de derechos de uso completo
@@ -43,9 +45,14 @@ ID_ESTACION_BIO = "BIO_JAVACASM"   # este ID se incorpora a los mensajes de info
 
 TIEMPO_ENTRE_MUESTRAS = 60 # tiempo en segundos. Por defecto 60, un minuto
 
+
+
+
 '''***********************************************************************************************'''
 '''***********************************************************************************************'''
 '''***********************************************************************************************'''
+
+ruta_programa = os.path.dirname(os.path.abspath(__file__)) +'/'
 
 RUTA_BACKUP = ''  #RUTA_BACKUP = 'backup/'
 
@@ -58,4 +65,10 @@ SerialDelay = 0.5                   #tiempo entre llamadas del puerto (en segund
                                     #No usar tiempos inferiores a 0.25 segundos 
 VELOCIDAD_PUERTO_SERIE = 115200
 
-INTERVALO_BACKUP = 10               #intervalo en minutos para copias de seguridad 
+INTERVALO_BACKUP = 10               #intervalo en minutos para copias de seguridad
+
+# MQTT configuration
+
+MQTT_SERVER = '192.168.1.200'
+
+BaseTopic_sub = 'MeteoSalon'
