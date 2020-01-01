@@ -133,7 +133,7 @@ def atenderTelegramas():
                     print (str(chat_time) + " >>> " + str(chat_id) +": " + usuario + " --> " + comando)
                     
                     if update.message.entities[0].type == "bot_command" and update.message.text == "/start":
-                        update.message.reply_text("Bienvenido a Experimento Bio v1.0", reply_markup=user_keyboard_markup)
+                        update.message.reply_text("Bienvenido a Experimento Bio v1.1", reply_markup=user_keyboard_markup)
                                             
                     # ===============   INTERPRETAR LOS COMANDOS QUE LLEGAN Y ACTUAR EN CONSECUENCIA   ===============
                     
